@@ -76,3 +76,40 @@ func (h *UserHandler) UserLoginHandler(c *gin.Context) {
 		"Data":    token,
 	})
 }
+
+func (h *UserHandler) GetUserProfileHandler(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c, time.Second*100)
+	defer cancel()
+
+	userID, ok := c.Get("user_id")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"Status": http.StatusBadRequest,
+			"Message": "error while user id from context",
+			"Error":   ""})
+		return
+	}
+
+	userIDStr, ok := userID.(string)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"Status": http.StatusBadRequest,
+			"Message": "error while converting user id to string",
+			"Error":   ""})
+		return
+	}
+
+	user, messge, err := h.service.GetUserByIDSvc(ctx, userIDStr)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Status":  http.StatusInternalServerError,
+			"Message": "Error fetching user profile",
+			"Error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"Status":  http.StatusOK,
+		"Message": messge,
+		"Data":    user,
+	})
+}

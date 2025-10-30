@@ -42,16 +42,14 @@ func (r *UserRepo) GetUserByID(ctx context.Context, ID string) (*entity.User, er
 		WHERE
 			id = $1
 	`
-
 	var (
-		id, username, email, password sql.NullString
+		id, username, email sql.NullString
 	)
 
 	err := r.dao.QueryRow(ctx, query, ID).Scan(
 		&id,
 		&username,
 		&email,
-		&password,
 	)
 	if err != nil {
 		return nil, err
@@ -61,7 +59,6 @@ func (r *UserRepo) GetUserByID(ctx context.Context, ID string) (*entity.User, er
 		ID:       id.String,
 		UserName: username.String,
 		Email:    email.String,
-		Password: password.String,
 	}
 	return user, nil
 }

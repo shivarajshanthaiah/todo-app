@@ -7,7 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/shivarajshanthaiah/todo-app/configs"
-	"github.com/shivarajshanthaiah/todo-app/internal/db"
+	"github.com/shivarajshanthaiah/todo-app/internal/clients/psql"
+	"github.com/shivarajshanthaiah/todo-app/internal/clients/redis"
 	"github.com/shivarajshanthaiah/todo-app/internal/handler"
 	"github.com/shivarajshanthaiah/todo-app/internal/repo"
 	"github.com/shivarajshanthaiah/todo-app/internal/routes"
@@ -15,8 +16,9 @@ import (
 )
 
 var (
-	DB   *pgxpool.Pool
-	Cnfg = configs.LoadConfig()
+	DB    *pgxpool.Pool
+	Cnfg  = configs.LoadConfig()
+	Redis *redis.RedisService
 )
 
 // Server represents the model of the server with a Gin engine.
@@ -34,7 +36,7 @@ func (s *Server) StartServer(port string) {
 	taskHandler := handler.NewTaskHandler(taskSvc)
 
 	userRepo := repo.NewUserRepository(DB)
-	userSvc := service.NewUserService(userRepo, Cnfg)
+	userSvc := service.NewUserService(userRepo, Cnfg, Redis)
 	userHandler := handler.NewUserHandler(userSvc)
 
 	routes.RegisterRoutes(s.R, taskHandler, userHandler, Cnfg)
@@ -53,8 +55,15 @@ func NewServer() *Server {
 func Setup() {
 	var err error
 	Cnfg = configs.LoadConfig()
-	DB, err = db.NewPsql(Cnfg)
+	DB, err = psql.NewPsql(Cnfg)
 	if err != nil {
 		log.Fatalf("Failed to connect to postgres: %v", err)
 	}
+	log.Println("Successfully connected to psql")
+
+	Redis, err = redis.SetupRedis(Cnfg)
+	if err != nil {
+		log.Fatalf("Failed to connect to redis")
+	}
+	log.Println("Successfully connected to redis")
 }

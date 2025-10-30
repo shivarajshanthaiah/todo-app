@@ -175,7 +175,20 @@ func (h *TaskHandler) DeleteTodoHandler(c *gin.Context) {
 	defer cancel()
 
 	taskIDStr := c.Param("id")
-	userID := c.Query("user_id")
+	userID, ok := c.Get("user_id")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"Status": http.StatusBadRequest,
+			"Message": "error while user id from context",
+			"Error":   ""})
+		return
+	}
+	userIDStr, ok := userID.(string)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"Status": http.StatusBadRequest,
+			"Message": "error while converting user id to string",
+			"Error":   ""})
+		return
+	}
 
 	taskID, err := strconv.Atoi(taskIDStr)
 	if err != nil {
@@ -187,7 +200,7 @@ func (h *TaskHandler) DeleteTodoHandler(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.DeleteTodoByIDSvc(ctx, taskID, userID); err != nil {
+	if err := h.service.DeleteTodoByIDSvc(ctx, taskID, userIDStr); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Status":  http.StatusInternalServerError,
 			"Message": "Error deleting todo",

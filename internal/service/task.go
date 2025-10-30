@@ -127,6 +127,10 @@ func (s *TaskService) DeleteTodoByIDSvc(ctx context.Context, taskID int, userID 
 		return err
 	}
 
+	log.Printf("Attempting to delete task %d for user ID (from param): %s", taskID, userID)
+
+	log.Println(task)
+
 	// Check ownership
 	if task == nil || task.UserID != userID {
 		return errors.New("task not found or unauthorized")

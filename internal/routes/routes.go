@@ -23,5 +23,6 @@ func RegisterRoutes(router *gin.Engine, todoHndlr *handler.TaskHandler, userHndl
 		user.PATCH("/todos/:id", todoHndlr.UpdateTodoHandler)
 		// user.PUT("/todos", todoHndlr.UpdateTodoHandler)
 		user.DELETE("/todos/:id", todoHndlr.DeleteTodoHandler)
+		user.GET("/get/profile", userHndlr.GetUserProfileHandler)
 	}
 }

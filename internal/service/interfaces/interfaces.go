@@ -16,4 +16,5 @@ type TaskServiceInterface interface {
 type UserServiceInterface interface {
 	UserSignUpSvc(ctx context.Context, user *models.User) error
 	UserLoginSvc(ctx context.Context, login *models.Login) (string, error)
+	GetUserByIDSvc(ctx context.Context, userID string) (*models.User, string, error)
 }

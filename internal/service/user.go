@@ -2,11 +2,15 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log"
+	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	"github.com/shivarajshanthaiah/todo-app/configs"
+	redisCl "github.com/shivarajshanthaiah/todo-app/internal/clients/redis"
 	"github.com/shivarajshanthaiah/todo-app/internal/jwt"
 	"github.com/shivarajshanthaiah/todo-app/internal/models"
 	"github.com/shivarajshanthaiah/todo-app/internal/repo/entity"
@@ -15,14 +19,16 @@ import (
 )
 
 type UserService struct {
-	repo repo.UserRepoInterface
-	cnfg *configs.Config
+	repo  repo.UserRepoInterface
+	cnfg  *configs.Config
+	redis *redisCl.RedisService
 }
 
-func NewUserService(repo repo.UserRepoInterface, cnfg *configs.Config) service.UserServiceInterface {
+func NewUserService(repo repo.UserRepoInterface, cnfg *configs.Config, redis *redisCl.RedisService) service.UserServiceInterface {
 	return &UserService{
-		repo: repo,
-		cnfg: cnfg,
+		repo:  repo,
+		cnfg:  cnfg,
+		redis: redis,
 	}
 }
 
@@ -41,7 +47,7 @@ func (s *UserService) UserSignUpSvc(ctx context.Context, user *models.User) erro
 
 	entityUser := &entity.User{
 		ID:       genetatedID.String(),
-		UserName: user.Username,
+		UserName: user.UserName,
 		Email:    user.Email,
 		Password: hashedPassword,
 	}
@@ -78,4 +84,53 @@ func (s *UserService) UserLoginSvc(ctx context.Context, login *models.Login) (st
 
 	log.Printf("Login successful for user: %s", user.Email)
 	return token, nil
+}
+
+func (s *UserService) GetUserByIDSvc(ctx context.Context, userID string) (*models.User, string, error) {
+
+	cacheKey := "user_" + userID
+	cachedUser, err := s.redis.GetFromRedis(cacheKey)
+
+	if err == nil {
+		// Unmarshal cached data into a User struct if cache hit
+		var user models.User
+		if err := json.Unmarshal([]byte(cachedUser), &user); err != nil {
+			log.Printf("Error unmarshalling cached user data: %v", err)
+		} else {
+			return &models.User{
+				ID:       user.ID,
+				UserName: user.UserName,
+				Email:    user.Email,
+			}, "fethed from cache", nil
+		}
+	} else if err != redis.Nil {
+		// Handle Redis error (other than missing key)
+		log.Printf("Error accessing Redis: %v", err)
+		return nil, "", err
+	}
+
+	// Cache miss: fetch user from the database
+	user, err := s.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		log.Println("Error while fetching the user from DB", err)
+		return nil, "", err
+	}
+
+	userModel := &models.User{
+		ID:       user.ID,
+		UserName: user.UserName,
+		Email:    user.Email,
+		Password: "", // don’t expose password
+	}
+
+	// Cache the retrieved user data for future requests
+	userData, err := json.Marshal(user)
+	if err == nil {
+		// seting 2 mins cachefor testing
+		_ = s.redis.SetDataInRedis(cacheKey, userData, time.Minute*2)
+	} else {
+		log.Printf("Error marshalling user data for caching: %v", err)
+	}
+
+	return userModel, "fetched from DB", nil
 }
