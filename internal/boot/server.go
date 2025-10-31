@@ -53,6 +53,7 @@ func NewServer() *Server {
 	}
 }
 
+// Intitialise external conncetions
 func Setup() {
 	var err error
 	Cnfg = configs.LoadConfig()
@@ -71,6 +72,7 @@ func Setup() {
 	log.Println("Successfully connected to redis")
 }
 
+// This should be read from .sql file and run. Im showing demo migration run with this func
 func runMigrations() {
 	schema := `
 CREATE TABLE IF NOT EXISTS users (

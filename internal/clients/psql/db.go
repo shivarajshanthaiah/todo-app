@@ -8,6 +8,7 @@ import (
 	"github.com/shivarajshanthaiah/todo-app/configs"
 )
 
+// NewPsql creates and returns a new PostgreSQL connection pool
 func NewPsql(config *configs.Config) (*pgxpool.Pool, error) {
 
 	connStr := fmt.Sprintf(
