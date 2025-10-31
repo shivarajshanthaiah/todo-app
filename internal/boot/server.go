@@ -1,6 +1,7 @@
 package boot
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -61,9 +62,44 @@ func Setup() {
 	}
 	log.Println("Successfully connected to psql")
 
+	runMigrations()
+
 	Redis, err = redis.SetupRedis(Cnfg)
 	if err != nil {
 		log.Fatalf("Failed to connect to redis")
 	}
 	log.Println("Successfully connected to redis")
+}
+
+func runMigrations() {
+	schema := `
+CREATE TABLE IF NOT EXISTS users (
+    id VARCHAR(63) NOT NULL PRIMARY KEY,
+    username VARCHAR(63) NOT NULL,                     
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now(),
+    email VARCHAR(63) NOT NULL UNIQUE,
+    password TEXT NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS emailusername ON users (lower(email));
+
+CREATE TABLE IF NOT EXISTS tasks (
+  id SERIAL PRIMARY KEY,
+  user_id VARCHAR(63) NOT NULL,
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now(),
+  title VARCHAR(119) NOT NULL,
+  description TEXT,
+  priority INT NOT NULL DEFAULT 1,
+  status INT NOT NULL DEFAULT 1,
+  due_at TIMESTAMP
+);
+`
+	_, err := DB.Exec(context.Background(), schema)
+	if err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
+
+	log.Println("Database migrations applied successfully")
 }

@@ -20,7 +20,7 @@ func NewTaskHandler(service interfaces.TaskServiceInterface) *TaskHandler {
 }
 
 func (h *TaskHandler) CreateTodoHandler(c *gin.Context) {
-	ctx, cancel := context.WithTimeout(c, 10*time.Second)
+	ctx, cancel := context.WithTimeout(c, 100*time.Second)
 	defer cancel()
 
 	var todo models.Todo
@@ -66,7 +66,7 @@ func (h *TaskHandler) CreateTodoHandler(c *gin.Context) {
 }
 
 func (h *TaskHandler) GetTodosHandler(c *gin.Context) {
-	ctx, cancel := context.WithTimeout(c, 10*time.Second)
+	ctx, cancel := context.WithTimeout(c, 100*time.Second)
 	defer cancel()
 
 	var req models.Request
@@ -125,9 +125,10 @@ func (h *TaskHandler) GetTodosHandler(c *gin.Context) {
 }
 
 func (h *TaskHandler) UpdateTodoHandler(c *gin.Context) {
-	ctx, cancel := context.WithTimeout(c, 10*time.Second)
+	ctx, cancel := context.WithTimeout(c, 100*time.Second)
 	defer cancel()
 
+	taskIDStr := c.Param("id")
 	userID, ok := c.Get("user_id")
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"Status": http.StatusBadRequest,
@@ -144,6 +145,12 @@ func (h *TaskHandler) UpdateTodoHandler(c *gin.Context) {
 		return
 	}
 
+	id, err := strconv.Atoi(taskIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Message": "invalid task id"})
+		return
+	}
+
 	var todo models.Todo
 	if err := c.ShouldBindJSON(&todo); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -154,6 +161,7 @@ func (h *TaskHandler) UpdateTodoHandler(c *gin.Context) {
 		return
 	}
 	todo.UserID = userIDStr
+	todo.ID = int64(id)
 
 	if err := h.service.UpdateTodoByIDSvc(ctx, &todo); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -171,7 +179,7 @@ func (h *TaskHandler) UpdateTodoHandler(c *gin.Context) {
 }
 
 func (h *TaskHandler) DeleteTodoHandler(c *gin.Context) {
-	ctx, cancel := context.WithTimeout(c, 10*time.Second)
+	ctx, cancel := context.WithTimeout(c, 100*time.Second)
 	defer cancel()
 
 	taskIDStr := c.Param("id")

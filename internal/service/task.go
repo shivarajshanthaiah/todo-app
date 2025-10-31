@@ -110,6 +110,8 @@ func (s *TaskService) UpdateTodoByIDSvc(ctx context.Context, todo *models.Todo) 
 		DueAt:       todo.DueAt,
 	}
 
+	log.Println("modified task", entityTask)
+
 	err := s.repo.UpdateTodoByID(ctx, int(todo.ID), entityTask)
 	if err != nil {
 		log.Println("Error updating todo in repo:", err)

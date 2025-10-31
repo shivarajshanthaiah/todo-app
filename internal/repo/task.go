@@ -143,10 +143,10 @@ func (r *TaskRepo) UpdateTodoByID(ctx context.Context, id int, updatedTask *enti
 			status = $4,
 			due_at = $5,
 			updated_at = now()
-		WHERE id = $6
+		WHERE id = $6 AND user_id = $7
 	`
 
-	_, err := r.dao.Exec(
+	cmdTag, err := r.dao.Exec(
 		ctx,
 		query,
 		updatedTask.Title,
@@ -155,8 +155,16 @@ func (r *TaskRepo) UpdateTodoByID(ctx context.Context, id int, updatedTask *enti
 		updatedTask.Status,
 		updatedTask.DueAt,
 		id,
+		updatedTask.UserID,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+
+	if cmdTag.RowsAffected() == 0 {
+		return fmt.Errorf("no rows updated — invalid id or user_id mismatch")
+	}
+	return nil
 }
 
 // This should be a soft delete, for now im keeping it as DELET operation
