@@ -36,6 +36,7 @@
    - Redis cache integration for users
    - PostgreSQL with pgxpool connection pooling
    - Clean modular structure
+     
  Future Improvements:
    - Add unit and integration tests
    - Expand caching strategy for ToDo lists
