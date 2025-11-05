@@ -24,6 +24,13 @@ func LoadConfig() *Config {
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
+	viper.SetConfigFile("../.env")
+	if err := viper.ReadInConfig(); err != nil {
+		log.Printf("No .env file found or could not read it: %v", err)
+	} else {
+		log.Println("Loaded .env file successfully")
+	}
+
 	// Explicitly bind expected environment variables
 	keys := []string{
 		"JWTSECRET", "HOST", "DBUSER", "PASSWORD", "DBNAME",

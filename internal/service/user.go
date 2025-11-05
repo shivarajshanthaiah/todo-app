@@ -16,26 +16,29 @@ import (
 	"github.com/shivarajshanthaiah/todo-app/internal/repo/entity"
 	repo "github.com/shivarajshanthaiah/todo-app/internal/repo/interfaces"
 	service "github.com/shivarajshanthaiah/todo-app/internal/service/interfaces"
+	"go.uber.org/zap"
 )
 
 type UserService struct {
-	repo  repo.UserRepoInterface
-	cnfg  *configs.Config
-	redis *redisCl.RedisService
+	repo   repo.UserRepoInterface
+	cnfg   *configs.Config
+	redis  *redisCl.RedisService
+	logger *zap.Logger
 }
 
-func NewUserService(repo repo.UserRepoInterface, cnfg *configs.Config, redis *redisCl.RedisService) service.UserServiceInterface {
+func NewUserService(repo repo.UserRepoInterface, cnfg *configs.Config, redis *redisCl.RedisService, logger *zap.Logger) service.UserServiceInterface {
 	return &UserService{
-		repo:  repo,
-		cnfg:  cnfg,
-		redis: redis,
+		repo:   repo,
+		cnfg:   cnfg,
+		redis:  redis,
+		logger: logger,
 	}
 }
 
 func (s *UserService) UserSignUpSvc(ctx context.Context, user *models.User) error {
 	genetatedID, err := uuid.NewUUID()
 	if err != nil {
-		log.Println("Error while generating uuid for user", err)
+		s.logger.Error("Error while generating uuid for user", zap.Error(err)) // imitate this for all the implementation of log
 		return err
 	}
 

@@ -10,15 +10,18 @@ import (
 	repo "github.com/shivarajshanthaiah/todo-app/internal/repo/interfaces"
 	service "github.com/shivarajshanthaiah/todo-app/internal/service/interfaces"
 	"github.com/shivarajshanthaiah/todo-app/pkg/globals"
+	"go.uber.org/zap"
 )
 
 type TaskService struct {
-	repo repo.TaskRepoInterface
+	repo   repo.TaskRepoInterface
+	logger *zap.Logger
 }
 
-func NewTaskService(repo repo.TaskRepoInterface) service.TaskServiceInterface {
+func NewTaskService(repo repo.TaskRepoInterface, logger *zap.Logger) service.TaskServiceInterface {
 	return &TaskService{
 		repo: repo,
+		logger: logger,
 	}
 }
 
